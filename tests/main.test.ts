@@ -1,11 +1,9 @@
-import { faker } from "@faker-js/faker";
 import { describe, it } from "vitest";
+import { db } from "./mocks/db";
 
 describe("group", () => {
   it("should", async () => {
-    console.log({
-      name: faker.commerce.productName(),
-      price: faker.commerce.price({ min: 20, max: 50 }),
-    });
+    const product = db.product.create({ name: "Apple" });
+    console.log(db.product.delete({ where: { id: { equals: 1 } } }));
   });
 });
