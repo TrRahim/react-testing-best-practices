@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 import CategerySelect from "../components/CategerySelect";
-import ProductSelect from "../components/ProductSelect";
+import ProductSelect from "../components/ProductTable";
 
 function BrowseProducts() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<
