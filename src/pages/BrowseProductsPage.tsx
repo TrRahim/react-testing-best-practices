@@ -1,62 +1,43 @@
 import { Select, Table } from "@radix-ui/themes";
-import axios, { AxiosError } from "axios";
-import { useEffect, useState } from "react";
+import axios from "axios";
+import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useQuery } from "react-query";
 import QuantitySelector from "../components/QuantitySelector";
 import { Category, Product } from "../entities";
 
 function BrowseProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isProductsLoading, setProductsLoading] = useState(false);
-  const [isCategoriesLoading, setCategoriesLoading] = useState(false);
-  const [errorProducts, setErrorProducts] = useState("");
-  const [errorCategories, setErrorCategories] = useState("");
+  const {
+    data: products,
+    isLoading: isProductsLoading,
+    error: errorProducts,
+  } = useQuery<Product[], Error>({
+    queryKey: ["products"],
+    queryFn: () => axios.get<Product[]>("/products").then((res) => res.data),
+  });
+
+  const categoriesQuery = useQuery<Category[], Error>({
+    queryKey: ["categories"],
+    queryFn: () => axios.get<Category[]>("/categories").then((res) => res.data),
+  });
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     number | undefined
   >();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setProductsLoading(true);
-        const { data } = await axios.get<Product[]>("/products");
-        setProducts(data);
-      } catch (error) {
-        if (error instanceof AxiosError) setErrorProducts(error.message);
-        else setErrorProducts("An unexpected error occurred");
-      } finally {
-        setProductsLoading(false);
-      }
-    };
-
-    const fetchCategories = async () => {
-      try {
-        setCategoriesLoading(true);
-        const { data } = await axios.get<Category[]>("/categories");
-        setCategories(data);
-      } catch (error) {
-        if (error instanceof AxiosError) setErrorCategories(error.message);
-        else setErrorCategories("An unexpected error occurred");
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-    fetchCategories();
-    fetchProducts();
-  }, []);
-
-  if (errorProducts) return <div>Error: {errorProducts}</div>;
+  if (errorProducts) return <div>Error: {errorProducts.message}</div>;
 
   const renderCategories = () => {
-    if (isCategoriesLoading)
+    const { isLoading, error, data: categories } = categoriesQuery;
+
+    if (isLoading)
       return (
         <div role="progressbar" aria-label="Loading categories">
           <Skeleton />
         </div>
       );
-    if (errorCategories) return null;
+    if (error) return null;
     return (
       <Select.Root
         onValueChange={(categoryId) =>
@@ -85,7 +66,7 @@ function BrowseProducts() {
     if (errorProducts) return <div>Error: {errorProducts}</div>;
 
     const visibleProducts = selectedCategoryId
-      ? products.filter((p) => p.categoryId === selectedCategoryId)
+      ? products!.filter((p) => p.categoryId === selectedCategoryId)
       : products;
 
     return (
@@ -116,7 +97,7 @@ function BrowseProducts() {
               </Table.Row>
             ))}
           {!isProductsLoading &&
-            visibleProducts.map((product) => (
+            visibleProducts!.map((product) => (
               <Table.Row key={product.id}>
                 <Table.Cell>{product.name}</Table.Cell>
                 <Table.Cell>${product.price}</Table.Cell>
