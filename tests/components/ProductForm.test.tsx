@@ -14,15 +14,33 @@ describe("ProductForm", () => {
     db.category.delete({ where: { id: { equals: category.id } } });
   });
 
+  const renderComponent = (product?: Product) => {
+    render(<ProductForm onSubmit={vi.fn()} product={product} />, {
+      wrapper: AllProviders,
+    });
+
+    return {
+      waitForFormToLoad: () => screen.findByRole("form"),
+      getInputs: () => {
+        return {
+          nameInput: screen.getByPlaceholderText(/name/i),
+          priceInput: screen.getByPlaceholderText(/price/i),
+          cateogryInput: screen.getByRole("combobox", { name: /category/i }),
+        };
+      },
+    };
+  };
+
   it("should render form fields", async () => {
-    render(<ProductForm onSubmit={vi.fn()} />, { wrapper: AllProviders });
+    const { waitForFormToLoad, getInputs } = renderComponent();
 
-    await screen.findByRole("form");
+    await waitForFormToLoad();
 
-    expect(screen.getByPlaceholderText(/name/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/price/i)).toBeInTheDocument();
+    const { nameInput, priceInput, cateogryInput } = getInputs();
 
-    expect(screen.getByRole("combobox", { name: /category/i }));
+    expect(nameInput).toBeInTheDocument();
+    expect(priceInput).toBeInTheDocument();
+    expect(cateogryInput).toBeInTheDocument();
   });
 
   it("should populate form fields when editting a product", async () => {
@@ -33,20 +51,14 @@ describe("ProductForm", () => {
       categoryId: category.id,
     };
 
-    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
-      wrapper: AllProviders,
-    });
+    const { waitForFormToLoad, getInputs } = renderComponent(product);
 
-    await screen.findByRole("form");
+    await waitForFormToLoad();
 
-    expect(screen.getByPlaceholderText(/name/i)).toHaveValue(product.name);
+    const { cateogryInput, nameInput, priceInput } = getInputs();
 
-    expect(screen.getByPlaceholderText(/price/i)).toHaveValue(
-      product.price.toString()
-    );
-
-    expect(
-      screen.getByRole("combobox", { name: /category/i })
-    ).toHaveTextContent(category.name);
+    expect(nameInput).toHaveValue(product.name);
+    expect(priceInput).toHaveValue(product.price.toString());
+    expect(cateogryInput).toHaveTextContent(category.name);
   });
 });
